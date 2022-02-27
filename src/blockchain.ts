@@ -17,11 +17,11 @@ export class BlockChain {
   #chain: Block[] = []
   private powPrefix = '0'
 
-  constructor (private readonly difficulty: number = 4) {
+  constructor(private readonly difficulty: number = 4) {
     this.#chain.push(this.createGenesisBlock())
   }
 
-  private createGenesisBlock () {
+  private createGenesisBlock() {
     const payload = {
       sequence: 0,
       timestamp: +new Date(),
@@ -37,19 +37,19 @@ export class BlockChain {
     }
   }
 
-  private get lastBlock (): Block {
+  private get lastBlock(): Block {
     return this.#chain.at(-1) as Block
   }
 
-  get chain () {
+  get chain() {
     return this.#chain
   }
 
-  private getPreviousBlockHash () {
+  private getPreviousBlockHash() {
     return this.lastBlock.header.blockHash
   }
 
-  createBlock (data: any) {
+  createBlock(data: any) {
     const newBlock = {
       sequence: this.lastBlock.payload.sequence + 1,
       timestamp: +new Date(),
@@ -61,7 +61,7 @@ export class BlockChain {
     return newBlock
   }
 
-  mineBlock (block: Block['payload']) {
+  mineBlock(block: Block['payload']) {
     let nonce = 0
     let startTime = +new Date()
 
@@ -69,11 +69,13 @@ export class BlockChain {
       const blockHash = hash(JSON.stringify(block))
       const proofingHash = hash(blockHash + nonce)
 
-      if (isHashProofed({
-        hash: proofingHash,
-        difficulty: this.difficulty,
-        prefix: this.powPrefix
-      })) {
+      if (
+        isHashProofed({
+          hash: proofingHash,
+          difficulty: this.difficulty,
+          prefix: this.powPrefix
+        })
+      ) {
         const endTime = +new Date()
         const shortHash = blockHash.slice(0, 12)
         const mineTime = (endTime - startTime) / 1000
@@ -91,25 +93,34 @@ export class BlockChain {
     }
   }
 
-  verifyBlock (block: Block) {
+  verifyBlock(block: Block) {
     if (block.payload.previousHash !== this.getPreviousBlockHash()) {
-      console.error(`Invalid block #${block.payload.sequence}: Previous block hash is "${this.getPreviousBlockHash().slice(0, 12)}" not "${block.payload.previousHash.slice(0, 12)}"`)
+      console.error(
+        `Invalid block #${block.payload.sequence}: Previous block hash is "${this.getPreviousBlockHash().slice(
+          0,
+          12
+        )}" not "${block.payload.previousHash.slice(0, 12)}"`
+      )
       return
     }
 
-    if (!isHashProofed({
-      hash: hash(hash(JSON.stringify(block.payload)) + block.header.nonce),
-      difficulty: this.difficulty,
-      prefix: this.powPrefix
-    })) {
-      console.error(`Invalid block #${block.payload.sequence}: Hash is not proofed, nonce ${block.header.nonce} is not valid`)
+    if (
+      !isHashProofed({
+        hash: hash(hash(JSON.stringify(block.payload)) + block.header.nonce),
+        difficulty: this.difficulty,
+        prefix: this.powPrefix
+      })
+    ) {
+      console.error(
+        `Invalid block #${block.payload.sequence}: Hash is not proofed, nonce ${block.header.nonce} is not valid`
+      )
       return
     }
 
     return true
   }
 
-  pushBlock (block: Block) {
+  pushBlock(block: Block) {
     if (this.verifyBlock(block)) this.#chain.push(block)
     console.log(`Pushed block #${JSON.stringify(block, null, 2)}`)
     return this.#chain
